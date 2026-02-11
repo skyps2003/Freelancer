@@ -1,0 +1,19 @@
+{
+  "devDependencies": {
+    "autoprefixer": "^10.4.24",
+    "client": "^0.0.1",
+    "create-vite": "^8.3.0",
+    "pnpx": "^0.0.1",
+    "postcss": "^8.5.6",
+    "react": "^19.2.4",
+    "tailwindcss": "^4.1.18"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.34.0",
+    "lucide-react": "^0.563.0",
+    "react-router-dom": "^7.13.0",
+    "tailwind-merge": "^3.4.0"
+  }
+}

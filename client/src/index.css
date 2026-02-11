@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-main text-white font-['Poppins'] tracking-wide;
+    background-image: radial-gradient(circle at 10% 20%, rgba(6, 214, 160, 0.1) 0%, transparent 20%),
+      radial-gradient(circle at 90% 80%, rgba(27, 154, 170, 0.1) 0%, transparent 20%);
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-secondary/10 backdrop-blur-md border border-secondary/30 shadow-xl;
+  }
+
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-2xl rounded-2xl;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-main font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:-translate-y-1;
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 20px rgba(6, 214, 160, 0.5);
+  }
+
+  .input-field {
+    @apply w-full p-4 bg-black/20 border border-white/10 rounded-xl focus:border-primary/50 focus:ring-2 focus:ring-primary/20 outline-none transition-all text-white placeholder-gray-400;
+  }
+}
