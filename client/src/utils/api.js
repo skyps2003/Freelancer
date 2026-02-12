@@ -1,9 +1,12 @@
 import axios from 'axios';
 
 // Dynamically determine the base URL
-// If running on localhost, it will be http://localhost:5000/api
-// If running on 192.168.1.5, it will be http://192.168.1.5:5000/api
+// - If VITE_API_URL is set (e.g., in .env), use it.
+// - Otherwise, fallback to the current hostname detection or localhost default.
 const getBaseUrl = () => {
+    if (import.meta.env.VITE_API_URL) {
+        return `${import.meta.env.VITE_API_URL}/api`;
+    }
     const { protocol, hostname } = window.location;
     return `${protocol}//${hostname}:5000/api`;
 };

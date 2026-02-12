@@ -22,7 +22,12 @@ const Chat = () => {
     const initialReceiverId = queryParams.get('receiverId');
 
     useEffect(() => {
-        const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : `http://${window.location.hostname}:5000`;
+        let socketUrl;
+        if (import.meta.env.VITE_API_URL) {
+            socketUrl = import.meta.env.VITE_API_URL;
+        } else {
+            socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : `http://${window.location.hostname}:5000`;
+        }
         socket.current = io(socketUrl);
 
         socket.current.on('connect', () => {

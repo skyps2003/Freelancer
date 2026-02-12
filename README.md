@@ -97,3 +97,11 @@ npm run dev
 ---
 *Generado automáticamente para documentar la estructura y uso del proyecto.*
 # Freelancer
+
+## 🚀 Despliegue en Red Local (Demo)
+
+Para ejecutar este proyecto en un entorno de demostración con 3 computadoras (1 Servidor, 2 Clientes), consulta la [Guía de Despliegue](docs/DEPLOYMENT_GUIDE.md).
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT.

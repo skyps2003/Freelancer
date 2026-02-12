@@ -60,4 +60,28 @@ const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
+
+    // Log available network interfaces
+    const { networkInterfaces } = require('os');
+    const nets = networkInterfaces();
+    const results = Object.create(null);
+
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+            if (net.family === 'IPv4' && !net.internal) {
+                if (!results[name]) {
+                    results[name] = [];
+                }
+                results[name].push(net.address);
+            }
+        }
+    }
+
+    console.log('Available on your network:');
+    for (const name of Object.keys(results)) {
+        for (const net of results[name]) {
+            console.log(`  http://${net}:${PORT}`);
+        }
+    }
 });
