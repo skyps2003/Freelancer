@@ -9,6 +9,7 @@ const CompanyDashboard = () => {
     const [projects, setProjects] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newProject, setNewProject] = useState({ title: '', description: '', budget_max: '', deadline: '' });
+    const [contracts, setContracts] = useState([]);
 
     // Payment State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -19,6 +20,7 @@ const CompanyDashboard = () => {
 
     useEffect(() => {
         fetchProjects();
+        fetchContracts();
     }, []);
 
     const fetchProjects = async () => {
@@ -27,6 +29,15 @@ const CompanyDashboard = () => {
             setProjects(res.data);
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const fetchContracts = async () => {
+        try {
+            const res = await api.get('/contracts');
+            setContracts(res.data);
+        } catch (err) {
+            console.error('Error fetching contracts:', err);
         }
     };
 
@@ -63,9 +74,36 @@ const CompanyDashboard = () => {
                 proposalId: selectedProposal._id
             });
 
+            // 3. Create Contract Auto
+            const freelancerId = selectedProposal.freelancer_id?._id || selectedProposal.freelancer_id;
+            await api.post('/contracts', {
+                company: user.id || user._id,
+                freelancer: freelancerId,
+                project: selectedProjectForPayment._id,
+                title: selectedProjectForPayment.title,
+                description: `Contrato para: ${selectedProjectForPayment.title}`,
+                totalAmount: selectedProposal.price,
+                deadline: selectedProjectForPayment.deadline,
+                milestones: [
+                    {
+                        title: 'Avance del 50%',
+                        description: 'Primera mitad del trabajo de desarrollo estructurado.',
+                        amount: Math.round(selectedProposal.price * 0.5),
+                        dueDate: selectedProjectForPayment.deadline
+                    },
+                    {
+                        title: 'Entrega Final',
+                        description: 'Entrega final y revisión de detalles técnicos.',
+                        amount: selectedProposal.price - Math.round(selectedProposal.price * 0.5),
+                        dueDate: selectedProjectForPayment.deadline
+                    }
+                ]
+            });
+
             setPaymentModalOpen(false);
-            fetchProjects(); // Refresh UI
-            alert('Proposal Accepted & Paid!');
+            fetchProjects();
+            fetchContracts(); // Refresh contracts
+            alert('Proposal Accepted, Paid & Contract Created!');
         } catch (err) {
             alert(err.response?.data?.msg || 'Payment Failed');
             setPaymentModalOpen(false);
@@ -100,6 +138,36 @@ const CompanyDashboard = () => {
                 >
                     <span className="text-xl">+</span> Publicar Necesidad
                 </button>
+
+                {/* Active Contracts */}
+                {contracts.length > 0 && (
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold text-white mb-6">🤝 Contratos Activos y Seguimiento</h2>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {contracts.map(contract => (
+                                <div 
+                                    key={contract._id}
+                                    className="p-6 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer flex flex-col justify-between"
+                                    onClick={() => navigate(`/contracts/${contract._id}`)}
+                                >
+                                    <div>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="font-bold text-white text-lg line-clamp-1">{contract.title}</h3>
+                                            <span className={`text-[10px] px-2 py-1 rounded font-bold ${contract.status === 'ACTIVE' ? 'bg-primary/20 text-primary' : 'bg-white/10 text-gray-300'}`}>
+                                                {contract.status}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-400 mb-4">Freelancer: <span className="text-white">{contract.freelancer?.name}</span></p>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/5 text-sm">
+                                        <span className="text-gray-400">Total: <strong className="text-white">${contract.totalAmount}</strong></span>
+                                        <span className="text-primary hover:underline">Ver Trazabilidad &rarr;</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid gap-8">
                     {projects.map(project => (

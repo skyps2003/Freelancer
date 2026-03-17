@@ -23,6 +23,17 @@ const MessageSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isOffer: {
+        type: Boolean,
+        default: false
+    },
+    expiresAt: {
+        type: Date
+    },
+    contract: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Contract'
+    },
     createdAt: {
         type: Date,
         default: Date.now

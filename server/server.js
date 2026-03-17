@@ -22,6 +22,7 @@ app.use('/api/offers', require('./routes/offer.routes'));
 app.use('/api/payments', require('./routes/payment.routes'));
 app.use('/api/messages', require('./routes/message.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
+app.use('/api/contracts', require('./routes/contractRoutes'));
 
 const http = require('http');
 const { Server } = require('socket.io');

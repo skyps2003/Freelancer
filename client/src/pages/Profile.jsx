@@ -10,6 +10,7 @@ const Profile = () => {
     const [myProducts, setMyProducts] = useState([]);
     const [myOffers, setMyOffers] = useState([]);
     const [myPurchases, setMyPurchases] = useState([]);
+    const [myContracts, setMyContracts] = useState([]);
     const [salesCount, setSalesCount] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({
@@ -36,6 +37,7 @@ const Profile = () => {
 
     useEffect(() => {
         if (user) {
+            fetchMyContracts();
             if (isCompany) {
                 fetchMyOffers();
                 fetchMyPurchases();
@@ -67,6 +69,15 @@ const Profile = () => {
             setMyOffers(res.data);
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const fetchMyContracts = async () => {
+        try {
+            const res = await api.get('/contracts');
+            setMyContracts(res.data);
+        } catch (err) {
+            console.error('Error fetching contracts:', err);
         }
     };
 
@@ -349,6 +360,54 @@ const Profile = () => {
                     </div>
 
                     {/* Content Grid */}
+                    {/* CONTRACTS SECTION (Visible to Both) */}
+                    <div className="mb-12">
+                        <h2 className="text-xl font-bold text-white mb-6 pl-2 border-l-4 border-secondary flex items-center gap-2">
+                            <span className="text-xl"></span> Mis Contratos y Proyectos
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {myContracts.map(contract => (
+                                <div
+                                    key={contract._id}
+                                    onClick={() => navigate(`/contracts/${contract._id}`)}
+                                    className="bg-gradient-to-br from-[#151515] to-[#0f0f0f] rounded-[1.5rem] overflow-hidden p-6 border border-white/5 hover:border-secondary/30 transition-all cursor-pointer group hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)] relative"
+                                >
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none group-hover:bg-secondary/10 transition-colors"></div>
+                                    <div className="flex justify-between items-start mb-4 relative z-10">
+                                        <h3 className="font-bold text-white text-lg group-hover:text-secondary transition">{contract.title}</h3>
+                                        <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider ${contract.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                                contract.status === 'ACTIVE' ? 'bg-secondary/10 text-secondary border border-secondary/20' :
+                                                    contract.status === 'CANCELLED' ? 'bg-alert/10 text-alert border border-alert/20' :
+                                                        'bg-primary/10 text-primary border border-primary/20'
+                                            }`}>
+                                            {contract.status === 'PENDING' ? 'PENDIENTE' : contract.status === 'ACTIVE' ? 'ACTIVO' : contract.status === 'COMPLETED' ? 'COMPLETADO' : 'CANCELADO'}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-400 text-sm mb-5 line-clamp-2 relative z-10">{contract.description}</p>
+                                    <div className="flex justify-between items-end relative z-10">
+                                        <div>
+                                            <span className="text-xs text-gray-500 block uppercase font-bold tracking-wider mb-1">Total</span>
+                                            <span className="text-white font-black text-lg">S/ {contract.totalAmount.toLocaleString()}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-xs text-gray-500 block uppercase font-bold tracking-wider mb-1">
+                                                {isCompany ? 'Freelancer' : 'Cliente'}
+                                            </span>
+                                            <span className="text-gray-300 font-medium text-sm">
+                                                {isCompany ? contract.freelancer?.name : contract.company?.name}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {myContracts.length === 0 && (
+                                <div className="col-span-full py-10 bg-white/5 rounded-[1.5rem] border border-dashed border-white/10 text-center">
+                                    <p className="text-gray-500">No tienes contratos activos ni pendientes.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <h2 className="text-xl font-bold text-white mb-6 pl-2 border-l-4 border-primary">
                         {isCompany ? 'Mis Ofertas de Trabajo' : 'Mis Publicaciones'}
                     </h2>

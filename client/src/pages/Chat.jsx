@@ -4,6 +4,86 @@ import AuthContext from '../context/AuthContext';
 import api from '../utils/api';
 import io from 'socket.io-client';
 
+const OfferMessageCard = ({ msg, isMe }) => {
+    const navigate = useNavigate();
+    const [timeLeft, setTimeLeft] = useState('');
+    const [expired, setExpired] = useState(false);
+
+    useEffect(() => {
+        if (!msg.expiresAt) return;
+        const targetDate = new Date(msg.expiresAt).getTime();
+
+        const calculateTimeLeft = () => {
+            const now = new Date().getTime();
+            const difference = targetDate - now;
+
+            if (difference <= 0) {
+                setExpired(true);
+                setTimeLeft('Expirado');
+                return;
+            }
+
+            const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+            setTimeLeft(`${h}h ${m}m ${s}s`);
+        };
+
+        calculateTimeLeft();
+        const timer = setInterval(calculateTimeLeft, 1000);
+
+        return () => clearInterval(timer);
+    }, [msg.expiresAt]);
+
+    const handleViewContract = () => {
+        if (msg.contract) {
+            navigate(`/contracts/${msg.contract}`);
+        }
+    };
+
+    return (
+        <div className={`p-5 rounded-2xl shadow-lg border relative overflow-hidden min-w-[300px] max-w-sm ${isMe ? 'bg-gradient-to-br from-[#005c4b] to-[#003e32] border-[#008f75]/30' : 'bg-gradient-to-br from-[#202c33] to-[#11191f] border-white/5'}`}>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+            
+            <div className="flex items-center gap-3 mb-4 relative z-10">
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                    <span className="text-xl">🎉</span>
+                </div>
+                <div>
+                    <span className={`block font-bold text-lg ${isMe ? 'text-white' : 'text-secondary'}`}>
+                        ¡Proyecto Aceptado!
+                    </span>
+                    <span className="block text-xs opacity-70">
+                        {isMe ? 'Has propuesto un contrato' : 'Revisa y acepta el contrato'}
+                    </span>
+                </div>
+            </div>
+
+            <p className="text-sm mb-5 leading-relaxed relative z-10 text-gray-200">{msg.content}</p>
+            
+            <div className="bg-black/30 backdrop-blur-sm p-4 rounded-xl flex flex-col items-center justify-center mb-5 relative z-10 border border-white/5">
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 font-bold">Tiempo restante</span>
+                <span className={`text-2xl font-mono font-bold tracking-wider ${expired ? 'text-alert' : 'text-secondary'} drop-shadow-md`}>
+                    {timeLeft}
+                </span>
+            </div>
+            
+            <button 
+                onClick={handleViewContract}
+                className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 relative z-10 shadow-lg hover:translate-y-[-2px] ${isMe ? 'bg-white text-[#005c4b] hover:bg-gray-100 hover:shadow-white/20' : 'bg-secondary text-black hover:bg-white hover:shadow-secondary/20'}`}
+            >
+                Ver Contrato
+            </button>
+
+            <div className={`text-[10px] text-right mt-3 opacity-70 relative z-10 ${isMe ? 'text-green-100' : 'text-gray-400'}`}>
+                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {isMe && <span className="ml-1 text-blue-300">✓✓</span>}
+            </div>
+        </div>
+    );
+};
+
 const Chat = () => {
     const { user } = useContext(AuthContext);
     const [conversations, setConversations] = useState([]);
@@ -273,18 +353,22 @@ const Chat = () => {
 
                                         return (
                                             <div key={idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                                                <div className={`max-w-[75%] relative`}>
-                                                    <div className={`px-4 py-2 rounded-xl text-sm leading-relaxed shadow-sm ${isMe
-                                                        ? 'bg-[#005c4b] text-white rounded-tr-none'
-                                                        : 'bg-[#202c33] text-gray-100 rounded-tl-none'
-                                                        }`}>
-                                                        {msg.content}
-                                                        <div className={`text-[10px] text-right mt-1 opacity-70 ${isMe ? 'text-green-100' : 'text-gray-400'}`}>
-                                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                            {isMe && <span className="ml-1 text-blue-300">✓✓</span>}
+                                                {msg.isOffer ? (
+                                                    <OfferMessageCard msg={msg} isMe={isMe} />
+                                                ) : (
+                                                    <div className={`max-w-[75%] relative`}>
+                                                        <div className={`px-4 py-2 rounded-xl text-sm leading-relaxed shadow-sm ${isMe
+                                                            ? 'bg-[#005c4b] text-white rounded-tr-none'
+                                                            : 'bg-[#202c33] text-gray-100 rounded-tl-none'
+                                                            }`}>
+                                                            {msg.content}
+                                                            <div className={`text-[10px] text-right mt-1 opacity-70 ${isMe ? 'text-green-100' : 'text-gray-400'}`}>
+                                                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                {isMe && <span className="ml-1 text-blue-300">✓✓</span>}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
                                         );
                                     })}

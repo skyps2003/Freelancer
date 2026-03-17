@@ -11,6 +11,7 @@ import CompanyDashboard from './pages/CompanyDashboard';
 import Chat from './pages/Chat';
 
 import Checkout from './pages/Checkout';
+import ContractTracker from './pages/ContractTracker';
 
 // Protected Route Component
 const PrivateRoute = ({ children }) => {
@@ -51,6 +52,14 @@ function App() {
                                 <Profile />
                             </PrivateRoute>
                         }
+                    />
+                    <Route 
+                        path="/contracts/:id" 
+                        element={
+                            <PrivateRoute>
+                                <ContractTracker />
+                            </PrivateRoute>
+                        } 
                     />
                 </Routes>
             </BrowserRouter>

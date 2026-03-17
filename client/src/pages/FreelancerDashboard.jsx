@@ -10,12 +10,14 @@ const FreelancerDashboard = () => {
     const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
     const [proposal, setProposal] = useState({ price: '', cover_letter: '' });
     const [notification, setNotification] = useState(null);
+    const [contracts, setContracts] = useState([]);
 
     const [notifications, setNotifications] = useState([]);
 
     useEffect(() => {
         fetchFeed();
         fetchNotifications();
+        fetchContracts();
     }, []);
 
     const fetchNotifications = async () => {
@@ -24,6 +26,15 @@ const FreelancerDashboard = () => {
             setNotifications(res.data);
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const fetchContracts = async () => {
+        try {
+            const res = await api.get('/contracts');
+            setContracts(res.data);
+        } catch (err) {
+            console.error('Error fetching contracts', err);
         }
     };
 
@@ -38,7 +49,8 @@ const FreelancerDashboard = () => {
 
     const fetchFeed = async () => {
         try {
-            const res = await api.get('/projects/feed');
+            // Get all offers (instead of legacy projects feed)
+            const res = await api.get('/offers');
             setProjects(res.data);
         } catch (err) {
             console.error(err);
@@ -148,43 +160,101 @@ const FreelancerDashboard = () => {
                     )}
                 </div>
 
+                {/* Active Contracts */}
+                {contracts.length > 0 && (
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold text-white mb-6">📂 Mis Contratos Activos</h2>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {contracts.map(contract => (
+                                <motion.div 
+                                    key={contract._id}
+                                    whileHover={{ y: -5 }}
+                                    className="p-6 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer flex flex-col justify-between"
+                                    onClick={() => window.location.href = `/contracts/${contract._id}`}
+                                >
+                                    <div>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="font-bold text-white text-lg line-clamp-1">{contract.title}</h3>
+                                            <span className={`text-[10px] px-2 py-1 rounded font-bold ${contract.status === 'ACTIVE' ? 'bg-primary/20 text-primary' : 'bg-white/10 text-gray-300'}`}>
+                                                {contract.status}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-400 mb-4 line-clamp-2">{contract.description}</p>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/5 text-sm">
+                                        <span className="text-gray-400">Total: <strong className="text-white">${contract.totalAmount}</strong></span>
+                                        <span className="text-primary hover:underline">Ver Trazabilidad &rarr;</span>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Project Feed */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {projects.map(project => (
-                        <motion.div
-                            key={project._id}
-                            whileHover={{ y: -5 }}
-                            className="glass p-6 rounded-2xl flex flex-col justify-between group hover:border-primary/50 transition duration-300"
-                        >
-                            <div>
-                                <div className="flex justify-between items-start mb-4">
-                                    <h2 className="text-xl font-bold text-white line-clamp-2 group-hover:text-primary transition">{project.title}</h2>
-                                    <span className="bg-warning text-black text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider shadow-lg">
-                                        {project.status === 'PENDIENTE' ? 'NUEVO' : 'ACTIVO'}
-                                    </span>
-                                </div>
-                                <p className="text-gray-400 text-sm mb-6 line-clamp-3 leading-relaxed">{project.description}</p>
+                    {projects.map(project => {
+                        // Check if current user applied
+                        const userApplication = project.applicants?.find(app => typeof app.user === 'object' ? app.user._id === user?.id : app.user === user?.id);
+                        const hasApplied = !!userApplication;
+                        const isAccepted = userApplication?.status === 'ACCEPTED';
+                        
+                        // Check if there is a contract for this offer where freelancer is current user
+                        // We already have `contracts` state fetched that we can scan
+                        const matchingContract = contracts.find(c => c.title === project.title && c.status === 'PENDING');
 
-                                <div className="flex justify-between items-center text-sm text-gray-300 mb-6 bg-black/20 p-3 rounded-lg">
-                                    <div className="flex flex-col">
-                                        <span className="text-xs text-gray-500">Presupuesto</span>
-                                        <span className="font-bold text-primary">${project.budget_max}</span>
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-xs text-gray-500">Deadline</span>
-                                        <span>{new Date(project.deadline).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={() => handleApplyClick(project)}
-                                className="w-full bg-white/5 border border-white/10 text-white font-bold py-3 rounded-xl hover:bg-primary hover:text-main hover:border-transparent transition-all duration-300"
+                        return (
+                            <motion.div
+                                key={project._id}
+                                whileHover={{ y: -5 }}
+                                className={`glass p-6 rounded-2xl flex flex-col justify-between group transition duration-300 ${isAccepted ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'hover:border-primary/50'}`}
                             >
-                                Postular Ahora
-                            </button>
-                        </motion.div>
-                    ))}
+                                <div>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h2 className="text-xl font-bold text-white line-clamp-2 group-hover:text-primary transition">{project.title}</h2>
+                                        <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider shadow-lg ${isAccepted ? 'bg-emerald-500 text-black' : 'bg-warning text-black'}`}>
+                                            {isAccepted ? 'ACEPTADO' : (project.status === 'PENDIENTE' ? 'NUEVO' : 'ACTIVO')}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-400 text-sm mb-6 line-clamp-3 leading-relaxed">{project.description}</p>
+
+                                    <div className="flex justify-between items-center text-sm text-gray-300 mb-6 bg-black/20 p-3 rounded-lg">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-gray-500">Presupuesto</span>
+                                            <span className="font-bold text-primary">${project.budget || project.budget_max}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-xs text-gray-500">Deadline</span>
+                                            <span>{new Date(project.deadline).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {isAccepted ? (
+                                    <button
+                                        onClick={() => matchingContract ? window.location.href = `/contracts/${matchingContract._id}` : {}}
+                                        className="w-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 font-bold py-3 rounded-xl hover:bg-emerald-500 hover:text-white transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                                    >
+                                        ¡Te aceptaron! Ver Propuesta y Hitos
+                                    </button>
+                                ) : hasApplied ? (
+                                    <button
+                                        disabled
+                                        className="w-full bg-white/5 border border-white/10 text-gray-400 font-bold py-3 rounded-xl cursor-not-allowed"
+                                    >
+                                        Ya postulaste a esta oferta
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handleApplyClick(project)}
+                                        className="w-full bg-white/5 border border-white/10 text-white font-bold py-3 rounded-xl hover:bg-primary hover:text-main hover:border-transparent transition-all duration-300"
+                                    >
+                                        Postular Ahora
+                                    </button>
+                                )}
+                            </motion.div>
+                        );
+                    })}
 
                     {projects.length === 0 && (
                         <div className="col-span-full text-center py-20">
