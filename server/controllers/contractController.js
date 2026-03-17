@@ -191,8 +191,50 @@ exports.reviewDeliverable = async (req, res) => {
             description: `El hito ${milestone.title} fue ${actionText}. ${comment ? 'Comentario: ' + comment : ''}`
         }).save();
 
-        // Aquí iría la lógica para liberar el pago en escrow si es APPROVED
+        // Liberar pago escrow al freelancer si es APPROVED
         if (status === 'APPROVED') {
+            const User = require('../models/User');
+            const WalletTransaction = require('../models/WalletTransaction');
+
+            const company = await User.findById(contract.company);
+            const freelancer = await User.findById(contract.freelancer);
+
+            const milestoneAmount = milestone.amount || 0;
+
+            if (milestoneAmount > 0) {
+                // Descontar de la empresa
+                const companyBalanceBefore = company.wallet || 0;
+                company.wallet = companyBalanceBefore - milestoneAmount;
+                await company.save();
+
+                await new WalletTransaction({
+                    user: company._id,
+                    type: 'ESCROW_RELEASE',
+                    amount: -milestoneAmount,
+                    description: `Pago liberado por hito "${milestone.title}" del proyecto "${contract.title}"`,
+                    relatedContract: contract._id,
+                    relatedMilestone: milestone._id,
+                    balanceBefore: companyBalanceBefore,
+                    balanceAfter: company.wallet,
+                }).save();
+
+                // Acreditar al freelancer
+                const freelancerBalanceBefore = freelancer.wallet || 0;
+                freelancer.wallet = freelancerBalanceBefore + milestoneAmount;
+                await freelancer.save();
+
+                await new WalletTransaction({
+                    user: freelancer._id,
+                    type: 'MILESTONE_PAYMENT',
+                    amount: milestoneAmount,
+                    description: `Pago recibido por hito "${milestone.title}" del proyecto "${contract.title}"`,
+                    relatedContract: contract._id,
+                    relatedMilestone: milestone._id,
+                    balanceBefore: freelancerBalanceBefore,
+                    balanceAfter: freelancer.wallet,
+                }).save();
+            }
+
             const allMilestones = await Milestone.find({ contract: milestone.contract });
             const allApproved = allMilestones.every(m => m.status === 'APPROVED');
             if (allApproved) {

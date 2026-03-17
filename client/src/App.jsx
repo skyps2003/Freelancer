@@ -12,6 +12,7 @@ import Chat from './pages/Chat';
 
 import Checkout from './pages/Checkout';
 import ContractTracker from './pages/ContractTracker';
+import Wallet from './pages/Wallet';
 
 // Protected Route Component
 const PrivateRoute = ({ children }) => {
@@ -60,6 +61,14 @@ function App() {
                                 <ContractTracker />
                             </PrivateRoute>
                         } 
+                    />
+                    <Route
+                        path="/wallet"
+                        element={
+                            <PrivateRoute>
+                                <Wallet />
+                            </PrivateRoute>
+                        }
                     />
                 </Routes>
             </BrowserRouter>

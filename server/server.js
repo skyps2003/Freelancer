@@ -23,6 +23,7 @@ app.use('/api/payments', require('./routes/payment.routes'));
 app.use('/api/messages', require('./routes/message.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
 app.use('/api/contracts', require('./routes/contractRoutes'));
+app.use('/api/wallet', require('./routes/wallet.routes'));
 
 const http = require('http');
 const { Server } = require('socket.io');
