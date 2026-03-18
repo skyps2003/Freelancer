@@ -12,8 +12,10 @@ const ContractTracker = () => {
     const [loading, setLoading] = useState(true);
     const [contractData, setContractData] = useState(null);
     const [isDeliverModalOpen, setIsDeliverModalOpen] = useState(false);
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
     const [selectedMilestone, setSelectedMilestone] = useState(null);
     const [deliverableForm, setDeliverableForm] = useState({ fileUrl: '', link: '', comment: '' });
+    const [rejectReason, setRejectReason] = useState('');
     const [notification, setNotification] = useState(null);
 
     useEffect(() => {
@@ -42,6 +44,20 @@ const ContractTracker = () => {
             fetchContractDetails(); // Refresh
         } catch (err) {
             setNotification({ type: 'error', message: err.response?.data?.message || 'Error al enviar entregable' });
+            setTimeout(() => setNotification(null), 3000);
+        }
+    };
+
+    const handleRejectSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await api.put(`/contracts/milestone/${selectedMilestone._id}/review`, { status: 'REJECTED', comment: rejectReason || 'Necesita revisiones.' });
+            setIsRejectModalOpen(false);
+            setNotification({ type: 'success', message: 'Hito Rechazado' });
+            setTimeout(() => setNotification(null), 3000);
+            fetchContractDetails();
+        } catch (err) {
+            setNotification({ type: 'error', message: 'Error al rechazar el hito' });
             setTimeout(() => setNotification(null), 3000);
         }
     };
@@ -299,7 +315,11 @@ const ContractTracker = () => {
                                                     Aprobar y Liberar Pago
                                                 </button>
                                                 <button
-                                                    onClick={() => handleReview(milestone._id, 'REJECTED', 'Necesita revisiones.')}
+                                                    onClick={() => {
+                                                        setSelectedMilestone(milestone);
+                                                        setRejectReason('');
+                                                        setIsRejectModalOpen(true);
+                                                    }}
                                                     className="bg-[#1A1A1A] text-red-400 border border-white/5 hover:border-red-500/30 hover:bg-red-500/10 px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 shadow-sm"
                                                 >
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -426,6 +446,40 @@ const ContractTracker = () => {
                                     </div>
                                     <button type="submit" className="w-full bg-emerald-500 text-black font-bold py-3 rounded-xl hover:bg-emerald-400 transition-all transform hover:scale-[1.02] shadow-lg">
                                         Enviar Trabajo
+                                    </button>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                {/* Submit Reject Modal */}
+                <AnimatePresence>
+                    {isRejectModalOpen && (
+                        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-[#151515] border border-white/10 p-8 w-full max-w-md relative rounded-2xl shadow-2xl"
+                            >
+                                <button onClick={() => setIsRejectModalOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white text-xl transition">&times;</button>
+                                <h2 className="text-2xl font-bold mb-1 text-white">Rechazar Hito</h2>
+                                <p className="text-sm text-gray-400 mb-6">Hito: <span className="text-red-400 font-bold">{selectedMilestone?.title}</span></p>
+
+                                <form onSubmit={handleRejectSubmit} className="flex flex-col gap-5">
+                                    <div>
+                                        <label className="block text-gray-400 font-medium text-xs mb-1 ml-1">Motivo del rechazo</label>
+                                        <textarea
+                                            className="w-full bg-[#0E0E0E] border border-white/5 focus:border-red-500 focus:ring-1 focus:ring-red-500/50 px-4 py-3 rounded-xl text-white outline-none transition resize-none h-32"
+                                            placeholder="Indica los cambios necesarios o el motivo del rechazo..."
+                                            value={rejectReason}
+                                            onChange={e => setRejectReason(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <button type="submit" className="w-full bg-red-500/10 text-red-400 border border-red-500/20 font-bold py-3 rounded-xl hover:bg-red-500/20 transition-all transform hover:scale-[1.02] shadow-lg">
+                                        Enviar Motivo de Rechazo
                                     </button>
                                 </form>
                             </motion.div>

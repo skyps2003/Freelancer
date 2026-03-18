@@ -142,7 +142,7 @@ exports.submitDeliverable = async (req, res) => {
         await new Message({
             sender: userId,
             receiver: contract.company,
-            content: `🚀 He enviado el entregable para el hito "${milestone.title}". Puedes revisarlo en los detalles del contrato.`
+            content: `He enviado el entregable para el hito "${milestone.title}". Puedes revisarlo en los detalles del contrato.`
         }).save();
 
         await new Activity({
@@ -176,7 +176,7 @@ exports.reviewDeliverable = async (req, res) => {
 
         const contract = await Contract.findById(milestone.contract);
         const Message = require('../models/Message');
-        const actionMsg = status === 'APPROVED' ? '✅ He aprobado' : '❌ He solicitado cambios para';
+        const actionMsg = status === 'APPROVED' ? 'He aprobado' : 'He solicitado cambios para';
         await new Message({
             sender: userId,
             receiver: contract.freelancer,
@@ -253,7 +253,7 @@ exports.reviewDeliverable = async (req, res) => {
                 await new Message({
                     sender: userId,
                     receiver: contract.freelancer,
-                    content: `🎉 ¡Todos los hitos han sido aprobados! El proyecto "${contract.title}" se ha marcado como COMPLETADO. Gran trabajo.`
+                    content: `¡Todos los hitos han sido aprobados! El proyecto "${contract.title}" se ha marcado como COMPLETADO. Gran trabajo.`
                 }).save();
 
                 await new Activity({
@@ -305,7 +305,7 @@ exports.acceptContract = async (req, res) => {
         await new Message({
             sender: userId,
             receiver: contract.company,
-            content: `🎉 He aceptado el contrato "${contract.title}". ¡Empecemos a trabajar!`
+            content: `He aceptado el contrato "${contract.title}". ¡Empecemos a trabajar!`
         }).save();
 
         await new Activity({
@@ -356,7 +356,7 @@ exports.rejectContract = async (req, res) => {
         await new Message({
             sender: userId,
             receiver: contract.company,
-            content: `❌ He rechazado la propuesta de contrato "${contract.title}". Motivo: ${reason || 'Sin especificar'}`
+            content: `He rechazado la propuesta de contrato "${contract.title}". Motivo: ${reason || 'Sin especificar'}`
         }).save();
 
         await new Activity({
